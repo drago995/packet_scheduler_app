@@ -20,7 +20,7 @@ public class App {
         packetScheduler = new PacketScheduler(new DataOutputStream(socket.getOutputStream()));
         // prvo ucitavamo pakete sa diska
         packetScheduler.loadPendingPackages();
-        receiverThread = new ReceiverThread("hermes.plusplus.rs", 4000, packetScheduler);
+        receiverThread = new ReceiverThread(new DataInputStream(socket.getInputStream()), packetScheduler);
         receiverThread.start();
         // nit koja se izvrsava pri gasenju JVM-a
         Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown));
@@ -40,6 +40,7 @@ public class App {
     private void onShutdown() {
 
         packetScheduler.savePendingPackets();
+        System.out.println(packetScheduler.getEfficiencyRatio());
 
     }
 
