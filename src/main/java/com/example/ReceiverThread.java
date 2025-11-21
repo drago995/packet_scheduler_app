@@ -13,14 +13,11 @@ public class ReceiverThread extends Thread {
         this.packetScheduler = scheduler;
     }
 
-    // u prvoj petlji pravimo rekonekcije ka serveru u slucaju pucanja server ili
-    // gasenja soketa od strane servera
-    //
     @Override
     public void run() {
 
         while (true) {
-            // dok konekcija traje (server ne pukne)
+
             try {
                 // citamo tip paketa - 4 bajta
                 byte[] typeBytes = new byte[4];
@@ -30,9 +27,14 @@ public class ReceiverThread extends Thread {
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 int packetType = bb.getInt();
 
-                // ostatak paketa
-                int packetSize = (packetType == 1) ? 16 : 12;
-                int remainingBytes = packetSize - 4;
+                // odredjujemo velicinu paketa
+                int packetSize = 0;
+                int remainingBytes = 0;
+
+                if (packetType == 1) {
+                    packetSize = 16;
+                    remainingBytes = packetSize - 4;
+                }
 
                 byte[] wholePacket = new byte[packetSize];
 
@@ -57,9 +59,6 @@ public class ReceiverThread extends Thread {
                     System.out.println(dummy);
                     packetScheduler.schedulePacket(dummy);
 
-                } else if (packetType == 2) {
-                    // CancelPacket cancelP = new CancelPacket(id, wholePacket);
-                    // packetScheduler.cancelPacket(id);
                 }
 
             } catch (IOException e) {

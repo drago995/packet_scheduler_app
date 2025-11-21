@@ -32,7 +32,7 @@ public class PacketPersistence {
             System.out.println("Error reading packets from disc");
             e.printStackTrace();
         }
-        
+
         return loadedPackets;
 
     }

@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 
 /**
  * Hello world!
- * // kada paket izadje iz queuq proveravamo da li je konekcija uspotavljena sa serverom - ukoliko jeste saljemo dummy paket nazad, ukoliko nije vadimo dummy paket iz kjua i krljamo u drgui cancel kju sa kensel paketom  NOVA nit koja salje kensel - KENSEL NIT JE BLOKIRANA DOK GO JE SERVER DOWN 
+ * //
  */
 public class App {
     private final Socket socket;
@@ -40,7 +40,6 @@ public class App {
     private void onShutdown() {
 
         packetScheduler.savePendingPackets();
-        System.out.println(packetScheduler.getEfficiencyRatio());
 
     }
 

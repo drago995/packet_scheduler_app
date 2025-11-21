@@ -29,10 +29,9 @@ public class PacketScheduler {
     private void startWorker() {
         while (true) {
             try {
-                // DelayQueue will block until a packet's delay has expired
+                // queue blokira dok ne istekne delay
                 DummyPacket dummy = delayQueue.take();
 
-                // samo saljemo dummy pakete, DelayQueue garantuje da je vreme stiglo
                 synchronized (out) {
                     out.write(dummy.getOriginalBuffer());
                     out.flush();
@@ -48,7 +47,7 @@ public class PacketScheduler {
         }
     }
 
-    // funkcija za proveru da li je paketu istekao delay 
+    // funkcija za proveru da li je paketu istekao delay
     private boolean isExpired(DummyPacket dummy) {
         return dummy.getExpirationTime() < System.currentTimeMillis();
     }
@@ -58,13 +57,13 @@ public class PacketScheduler {
         packetPersistence.saveAll(list);
     }
 
-    // ucitavamo sacuvane pakete i ubacujemo u delay queue
+    // ucitavamo sacuvane pakete i ubacujemo u delay queue, ako im nije istekao
+    // delay, u suprotnom saljemo cancel
     public void loadPendingPackages() {
         List<DummyPacket> packets = packetPersistence.getAllPackages();
         System.out.println("PAKETI SA DISKA:");
         for (DummyPacket packet : packets) {
             System.out.println(packet.toString());
-            // proveravamo  pakete sa diska da li su vec istekli
             if (!isExpired(packet)) {
                 schedulePacket(packet);
             } else {

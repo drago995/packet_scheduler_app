@@ -65,8 +65,8 @@ public class DummyPacket implements Delayed, Serializable {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
 
         buffer.putInt(2);
-        buffer.putInt(12); 
-        buffer.putInt((int) id); 
+        buffer.putInt(12);
+        buffer.putInt((int) id);
 
         return buffer.array();
 
