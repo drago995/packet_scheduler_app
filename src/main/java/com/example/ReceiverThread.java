@@ -3,68 +3,65 @@ package com.example;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.BlockingQueue;
 
 public class ReceiverThread extends Thread {
-    private final PacketScheduler packetScheduler;
     private final DataInputStream in;
+    private final BlockingQueue<Packet> delayQueue;
+    private volatile boolean running = true;
 
-    public ReceiverThread(DataInputStream in, PacketScheduler scheduler) {
+    public ReceiverThread(DataInputStream in, BlockingQueue<Packet> queue) {
         this.in = in;
-        this.packetScheduler = scheduler;
+        this.delayQueue = queue;
     }
 
     @Override
     public void run() {
 
-        while (true) {
+        while (running) {
 
             try {
-                // citamo tip paketa - 4 bajta
+                // determining packet type based on first 4 bytes
                 byte[] typeBytes = new byte[4];
                 in.readFully(typeBytes);
-                // server salje podatke u little endian - koristimo byte buffer za konverziju
-                ByteBuffer bb = ByteBuffer.wrap(typeBytes);
-                bb.order(ByteOrder.LITTLE_ENDIAN);
-                int packetType = bb.getInt();
 
-                // odredjujemo velicinu paketa
+                ByteBuffer byteBuffer = ByteBuffer.wrap(typeBytes);
+                byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                int packetType = byteBuffer.getInt();
+
+                // determining packet size based on type
                 int packetSize = 0;
                 int remainingBytes = 0;
-
+                Packet packet;
                 if (packetType == 1) {
                     packetSize = 16;
                     remainingBytes = packetSize - 4;
+                    packet = new DummyPacket();
+                } else {
+                    throw new Exception("Unsupported packet type: " + packetType);
+
                 }
 
                 byte[] wholePacket = new byte[packetSize];
 
-                // cuvamo paket u celosti kako bih ga poslao lakse nazad !
                 System.arraycopy(typeBytes, 0, wholePacket, 0, 4);
 
                 in.readFully(wholePacket, 4, remainingBytes);
 
-                ByteBuffer bb2 = ByteBuffer.wrap(wholePacket);
-                bb2.order(ByteOrder.LITTLE_ENDIAN);
+                ByteBuffer bBuffer = ByteBuffer.wrap(wholePacket);
 
-                int type = bb2.getInt();
-                int len = bb2.getInt();
-                // java ima signed int, server salje unsigned pa konvertujemo
-                int idSigned = bb2.getInt();
+                bBuffer.order(ByteOrder.LITTLE_ENDIAN); // server sends data in little endian
 
-                long id = Integer.toUnsignedLong(idSigned);
+                packet.readPacketDataFromBuffer(bBuffer, wholePacket);
 
-                if (packetType == 1) {
-                    int delay = bb2.getInt();
-                    DummyPacket dummy = new DummyPacket(delay, wholePacket, id);
-                    System.out.println(dummy);
-                    packetScheduler.schedulePacket(dummy);
-
-                }
-
+                delayQueue.add(packet);
+                System.out.println("Received packet: " + packet.toString());
             } catch (IOException e) {
-                System.out.println("PUKLA JE VEZA");
                 e.printStackTrace();
 
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
 
@@ -108,4 +105,8 @@ public class ReceiverThread extends Thread {
      * }
      * }
      */
+
+    public void shutdown() {
+        running = false;
+    }
 }

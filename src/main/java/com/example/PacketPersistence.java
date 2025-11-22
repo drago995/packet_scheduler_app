@@ -1,39 +1,32 @@
 package com.example;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PacketPersistence {
 
-    public PacketPersistence() {
+    private static final String FILE_NAME = "unsent_packets.dat";
 
+    public PacketPersistence() {
     }
 
-    public void saveAll(List<DummyPacket> packets) {
-
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("unsent_packets.dat"))) {
+    public void saveAll(List<Packet> packets) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
             oos.writeObject(packets);
         } catch (IOException e) {
-
             e.printStackTrace();
         }
     }
 
-    public List<DummyPacket> getAllPackages() {
-        List<DummyPacket> loadedPackets = new ArrayList<>();
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("unsent_packets.dat"))) {
-            loadedPackets = (List<DummyPacket>) ois.readObject();
+    public List<Packet> getAllPackets() {
+        List<Packet> loadedPackets = new ArrayList<>();
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_NAME))) {
+            loadedPackets = (List<Packet>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error reading packets from disc");
+            System.out.println("Error reading packets from disk");
             e.printStackTrace();
         }
-
         return loadedPackets;
-
     }
 }

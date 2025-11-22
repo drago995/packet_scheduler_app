@@ -1,30 +1,23 @@
 package com.example;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-public class DummyPacket implements Delayed, Serializable {
-    // kad budem slao nazad moracu da konvertujem sve opet ?
-    private final long expirationTimeMilis;
-    private final long delay;
-    private final long arrivalTimeMilis;
-    private long savedAtTime;
-    // da vratim serveru paket u originalnom formatu
-    private final byte[] originalBuffer;
-    private final long id;
+public class DummyPacket implements Packet {
+    private long expirationTimeMilis;
+    private long delay;
+    private byte[] originalBuffer;
+    private long id;
+    private int length;
+    private int type;
 
-    public DummyPacket(long delaySeconds, byte[] buffer, long id) {
-        this.expirationTimeMilis = System.currentTimeMillis() + delaySeconds * 1000L;
-        this.delay = delaySeconds;
-        this.arrivalTimeMilis = System.currentTimeMillis();
-        this.originalBuffer = buffer.clone();
-        this.id = id;
+    public DummyPacket() {
+
     }
 
-    // metoda vraca preostali delay u jedinicama callera
+    // method returning remaining delay in given time unit
     @Override
     public long getDelay(TimeUnit unit) {
         long remainingDelayMilis = expirationTimeMilis - System.currentTimeMillis();
@@ -52,10 +45,6 @@ public class DummyPacket implements Delayed, Serializable {
         return originalBuffer;
     }
 
-    public void setSavedTime(long savedTime) {
-        this.savedAtTime = savedTime;
-    }
-
     public long getExpirationTime() {
         return expirationTimeMilis;
     }
@@ -69,6 +58,20 @@ public class DummyPacket implements Delayed, Serializable {
         buffer.putInt((int) id);
 
         return buffer.array();
+
+    }
+
+    @Override
+    public void readPacketDataFromBuffer(ByteBuffer buffer, byte[] byteArray) {
+
+        this.type = buffer.getInt();
+        this.length = buffer.getInt();
+        this.id = Integer.toUnsignedLong(buffer.getInt());
+        this.delay = buffer.getInt();
+
+        this.originalBuffer = byteArray.clone();
+
+        this.expirationTimeMilis = System.currentTimeMillis() + delay * 1000L;
 
     }
 
